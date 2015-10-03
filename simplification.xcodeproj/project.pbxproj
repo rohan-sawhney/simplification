@@ -251,7 +251,10 @@
 		320FDC8F1BBCAC5F0002DD7E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				HEADER_SEARCH_PATHS = /usr/local/Cellar/eigen/3.2.4/include/eigen3;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/Cellar/eigen/3.2.4/include/eigen3,
+					/usr/local/Cellar/boost/1.57.0/include,
+				);
 				LIBRARY_SEARCH_PATHS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -260,7 +263,10 @@
 		320FDC901BBCAC5F0002DD7E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				HEADER_SEARCH_PATHS = /usr/local/Cellar/eigen/3.2.4/include/eigen3;
+				HEADER_SEARCH_PATHS = (
+					/usr/local/Cellar/eigen/3.2.4/include/eigen3,
+					/usr/local/Cellar/boost/1.57.0/include,
+				);
 				LIBRARY_SEARCH_PATHS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -285,6 +291,7 @@
 				320FDC901BBCAC5F0002DD7E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

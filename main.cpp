@@ -4,6 +4,7 @@
 #include <GL/glut.h>
 #endif
 
+#include <iomanip>
 #include "Mesh.h"
 
 int gridX = 600;
@@ -16,6 +17,7 @@ const double clipFar = 1000.;
 double x = 0;
 double y = 0;
 double z = -2.5;
+int percent = 70;
 
 std::string path = "/Users/rohansawhney/Desktop/developer/C++/simplification/bunny.obj";
 
@@ -71,7 +73,7 @@ void display()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     
-    gluLookAt(0, 0, z, x, y, 0, 0, 1, 0);
+    gluLookAt(0, 1, z, x, y, 0, 0, 1, 0);
     
     if (success) {
         draw();
@@ -86,7 +88,8 @@ void keyboard(unsigned char key, int x0, int y0)
         case 27 :
             exit(0);
         case ' ':
-            mesh.simplify(0.3);
+            mesh.read(path);
+            mesh.simplify(1 - (double)percent / 100.0);
             break;
         case 'a':
             x -= 0.03;
@@ -117,7 +120,19 @@ void special(int i, int x0, int y0)
         case GLUT_KEY_DOWN:
             z -= 0.03;
             break;
+        case GLUT_KEY_LEFT:
+            percent -= 5;
+            if (percent < 0) percent = 0;
+            break;
+        case GLUT_KEY_RIGHT:
+            percent += 5;
+            if (percent > 90) percent = 90;
+            break;
     }
+    
+    std::stringstream title;
+    title << "Mesh Simplification, Reduction Percentage: " << percent << "%";
+    glutSetWindowTitle(title.str().c_str());
     
     glutPostRedisplay();
 }
@@ -130,7 +145,9 @@ int main(int argc, char** argv) {
     glutInitWindowSize(gridX, gridY);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     glutInit(&argc, argv);
-    glutCreateWindow("Mesh Simplification");
+    std::stringstream title;
+    title << "Mesh Simplification, Reduction ratio: " << percent << "%";
+    glutCreateWindow(title.str().c_str());
     init();
     glutDisplayFunc(display);
     glutKeyboardFunc(keyboard);

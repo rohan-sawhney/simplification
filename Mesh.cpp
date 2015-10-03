@@ -58,6 +58,14 @@ Eigen::Matrix4d computeQuadric(const Eigen::Vector4d& plane)
     return quadric;
 }
 
+void Mesh::updateHeap(EdgeIter& e)
+{
+    e->cost = 0;
+    (*handles[e->index]).cost = e->cost;
+    heap.update(handles[e->index]);
+    heap.pop();
+}
+
 void Mesh::collapseEdge(EdgeIter& e)
 {
     HalfEdgeIter he = e->he;
@@ -109,9 +117,9 @@ void Mesh::collapseEdge(EdgeIter& e)
     
     // mark for deletion
     v2->remove = true;
-    e->remove = true;
-    e2->remove = true;
-    e3->remove = true;
+    e->remove = true; updateHeap(e);
+    e2->remove = true; updateHeap(e2);
+    e3->remove = true; updateHeap(e3);
     he->remove = true;
     flip->remove = true;
     heNextNext->remove = true;
@@ -213,45 +221,58 @@ void Mesh::setEdgeCollapseCost()
     }
 }
 
-void Mesh::simplify(const double ratio)
+void Mesh::simplify(double ratio)
 {
     // 1
     setQuadrics();
     
     // 2
     setEdgeCollapseCost();
-    
+
     // 3
+    for (EdgeIter e = edges.begin(); e != edges.end(); e++) {
+        boost::heap::fibonacci_heap<Edge>::handle_type h = heap.push(*e);
+        handles.push_back(h);
+        (*h).handle = h;
+    }
+    
+    // 4
+    if (ratio < 0.1) ratio = 0.1;
     int target = faces.size() * ratio;
-    while (faces.size() > target) {
-        
-        EdgeIter minE = edges.begin();
-        for (EdgeIter e = edges.begin(); e != edges.end(); e++) {
-            if (e->cost < minE->cost) {
-                minE = e;
-            }
-        }
-        
-        VertexIter v1 = minE->he->vertex;
-        VertexIter v2 = minE->he->flip->vertex;
+    int nF = (int)faces.size();
+    while (nF > target) {
+        const Edge& minE = heap.top();
+    
+        VertexIter v1 = minE.he->vertex;
+        VertexIter v2 = minE.he->flip->vertex;
         
         // update vertex position and quadric
-        v1->position = minE->position;
+        v1->position = minE.position;
         v1->quadric = v1->quadric + v2->quadric;
         
         // collapse edge
-        collapseEdge(minE);
-        resetLists();
+        EdgeIter e = edges.begin() + minE.index;
+        collapseEdge(e);
         
         // update edge collapse cost
         HalfEdgeIter he = v1->he;
         do {
             EdgeIter e = he->edge;
+            
             e->computeCollapseCost();
-                
+            (*handles[e->index]).cost = e->cost;
+            heap.update(handles[e->index]);
+        
             he = he->flip->next;
         } while (he != v1->he);
+        
+        nF -= 2;
     }
+    
+    // clean up
+    resetLists();
+    heap.clear();
+    handles.clear();
 }
 
 void Mesh::normalize()

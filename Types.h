@@ -9,6 +9,7 @@
 #include "math.h"
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <boost/heap/fibonacci_heap.hpp>
 
 class Vertex;
 class Edge;

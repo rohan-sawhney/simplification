@@ -22,7 +22,7 @@ public:
     bool write(const std::string& fileName) const;
     
     // simplifies mesh
-    void simplify(const double ratio);
+    void simplify(double ratio);
     
     // member variables
     std::vector<HalfEdge> halfEdges;
@@ -46,11 +46,18 @@ private:
     // checks valid flip
     bool validCollapse(EdgeIter& e);
     
+    // updates heap
+    void updateHeap(EdgeIter& e);
+    
     // collapses edge and removes adjacent faces
     void collapseEdge(EdgeIter& e);
-    
+
     // removes edges marked for deletion
     void resetLists();
+    
+    // heap 
+    boost::heap::fibonacci_heap<Edge> heap;
+    std::vector<boost::heap::fibonacci_heap<Edge>::handle_type> handles;
 };
 
 #endif

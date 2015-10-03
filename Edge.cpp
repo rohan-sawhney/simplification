@@ -2,6 +2,11 @@
 #include "HalfEdge.h"
 #include "Vertex.h"
 
+bool Edge::operator<(Edge const& e) const
+{
+    return cost > e.cost;
+}
+
 double error(const Eigen::Matrix4d& quadric, const double x, const double y, const double z)
 {
     return quadric(0,0)*x*x + 2*quadric(0,1)*x*y + 2*quadric(0,2)*x*z + 2*quadric(0, 3)*x +
@@ -11,7 +16,7 @@ double error(const Eigen::Matrix4d& quadric, const double x, const double y, con
 }
 
 bool Edge::validCollapse()
-{
+{    
     HalfEdgeCIter flip = he->flip;
     
     VertexCIter v1 = he->vertex;

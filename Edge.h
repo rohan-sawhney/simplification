@@ -20,6 +20,12 @@ public:
     // vertex position after collapse
     Eigen::Vector3d position;
     
+    // heap handle
+    boost::heap::fibonacci_heap<Edge>::handle_type handle;
+    
+    // comparator
+    bool operator<(Edge const& e) const;
+    
     // checks if collapse is valid
     bool validCollapse();
     
