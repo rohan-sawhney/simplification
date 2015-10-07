@@ -24,18 +24,15 @@ bool Vertex::onBoundary() const
 
 bool Vertex::shareEdge(VertexCIter& v) const
 {
-    HalfEdgeCIter h1 = he;
+    HalfEdgeCIter h = he;
     do {
-        HalfEdgeCIter h2 = v->he;
-        do {
-            if (h1 == h2->flip) return true;
-            h2 = h2->flip->next;
-            
-        } while (h2 != v->he);
+        if (h->flip->vertex == v) {
+            return true;
+        }
         
-        h1 = h1->flip->next;
+        h = h->flip->next;
         
-    } while (h1 != he);
+    } while (h != he);
     
     return false;
 }
