@@ -27,6 +27,7 @@ bool success = true;
 void printInstructions()
 {
     std::cerr << "space: simplify\n"
+              << "→/←: increase/decrease reduction percentage\n"
               << "↑/↓: move in/out\n"
               << "w/s: move up/down\n"
               << "a/d: move left/right\n"
