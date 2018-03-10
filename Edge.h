@@ -24,7 +24,7 @@ public:
     boost::heap::fibonacci_heap<Edge>::handle_type handle;
     
     // comparator
-    bool operator<(Edge const& e) const;
+    bool operator<(const Edge& e) const;
     
     // checks if collapse is valid
     bool validCollapse();
@@ -32,6 +32,10 @@ public:
     // computes edge collapse cost
     void computeCollapseCost();
     
+    // collapses edge
+    void collapse();
+    
+    // computes edge length
     double length() const;
 };
 

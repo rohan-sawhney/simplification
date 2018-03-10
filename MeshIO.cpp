@@ -396,8 +396,6 @@ bool MeshIO::read(std::ifstream& in, Mesh& mesh)
 void MeshIO::write(std::ofstream& out, const Mesh& mesh)
 {
     std::unordered_map<std::string, int> vertexMap;
-    std::unordered_map<std::string, int> uvMap;
-    std::unordered_map<std::string, int> normalMap;
     
     // write vertices
     int index = 1;
@@ -410,31 +408,9 @@ void MeshIO::write(std::ofstream& out, const Mesh& mesh)
         index++;
     }
     
-    // write uvs
-    index = 1;
-    for (VectorCIter uv = mesh.uvs.begin(); uv != mesh.uvs.end(); uv++) {
-        out << "vt " << uv->x() << " "
-                     << uv->y() << std::endl;
-        
-        uvMap[stringRep(*uv)] = index;
-        index++;
-    }
-    
-    // write normals
-    index = 1;
-    for (VectorCIter n = mesh.uvs.begin(); n != mesh.normals.end(); n++) {
-        out << "vn " << n->x() << " "
-                     << n->y() << " "
-                     << n->z() << std::endl;
-        
-        normalMap[stringRep(*n)] = index;
-        index++;
-    }
-    
     // write faces
-    index = 0;
     for (FaceCIter f = mesh.faces.begin(); f != mesh.faces.end(); f++) {
-        HalfEdgeIter he = mesh.faces[index].he;
+        HalfEdgeIter he = f->he;
         
         if (he->onBoundary) {
             continue;
@@ -443,15 +419,12 @@ void MeshIO::write(std::ofstream& out, const Mesh& mesh)
         out << "f ";
         int j = 0;
         do {
-            out << vertexMap[stringRep(he->vertex->position)] << "/"
-                << uvMap[stringRep(he->uv)] << "/"
-                << normalMap[stringRep(he->normal)] << " ";
+            out << vertexMap[stringRep(he->vertex->position)] << " ";
             j++;
             
             he = he->next;
-        } while (he != mesh.faces[index].he);
+        } while (he != f->he);
         
         out << std::endl;
-        index ++;
     }
 }

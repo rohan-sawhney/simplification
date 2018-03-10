@@ -58,76 +58,32 @@ Eigen::Matrix4d computeQuadric(const Eigen::Vector4d& plane)
     return quadric;
 }
 
-void Mesh::updateHeap(EdgeIter& e)
+void Mesh::computeQuadrics()
 {
-    e->cost = 0;
-    (*handles[e->index]).cost = e->cost;
-    heap.update(handles[e->index]);
-    heap.pop();
+    for (VertexIter v = vertices.begin(); v != vertices.end(); v++) {
+        v->quadric.setZero();
+    }
+    
+    for (FaceCIter f = faces.begin(); f != faces.end(); f++) {
+        if (!f->isBoundary()) {
+            Eigen::Vector4d plane = f->plane();
+            
+            HalfEdgeCIter he = f->he;
+            do {
+                VertexIter v = he->vertex;
+                v->quadric += computeQuadric(plane);
+                
+                he = he->next;
+            } while (he != f->he);
+        }
+    }
 }
 
-void Mesh::collapseEdge(EdgeIter& e)
+void Mesh::computeEdgeCollapseCost()
 {
-    HalfEdgeIter he = e->he;
-    HalfEdgeIter heNext = he->next;
-    HalfEdgeIter heNextNext = heNext->next;
-    
-    HalfEdgeIter flip = he->flip;
-    HalfEdgeIter flipNext = flip->next;
-    HalfEdgeIter flipNextNext = flipNext->next;
-    
-    VertexIter v1 = he->vertex;
-    VertexIter v2 = flip->vertex;
-    VertexIter v3 = heNextNext->vertex;
-    VertexIter v4 = flipNextNext->vertex;
-    
-    EdgeIter e2 = heNextNext->edge;
-    EdgeIter e3 = flipNext->edge;
-    
-    FaceIter f = he->face;
-    FaceIter fFlip = flip->face;
-    
-    // set halfEdge vertex
-    HalfEdgeIter h = flip;
-    do {
-        h->vertex = v1;
-        h = h->flip->next;
-        
-    } while (h != flip);
-    
-    // set vertex halfEdge
-    v1->he = heNext;
-    v3->he = heNextNext->flip->next;
-    v4->he = flipNextNext;
-    
-    // set next halfEdge
-    heNext->next = heNextNext->flip->next;
-    heNextNext->flip->next->next->next = heNext;
-    
-    flipNextNext->next = flipNext->flip->next;
-    flipNext->flip->next->next->next = flipNextNext;
-    
-    // set halfEdge face
-    heNext->face = heNextNext->flip->face;
-    flipNextNext->face = flipNext->flip->face;
-    
-    // set face halfEdge
-    if (heNextNext->flip->face->he == heNextNext->flip) heNextNext->flip->face->he = heNext;
-    if (flipNext->flip->face->he == flipNext->flip) flipNext->flip->face->he = flipNextNext;
-    
-    // mark for deletion
-    v2->remove = true;
-    e->remove = true; updateHeap(e);
-    e2->remove = true; updateHeap(e2);
-    e3->remove = true; updateHeap(e3);
-    he->remove = true;
-    flip->remove = true;
-    heNextNext->remove = true;
-    heNextNext->flip->remove = true;
-    flipNext->remove = true;
-    flipNext->flip->remove = true;
-    f->remove = true;
-    fFlip->remove = true;
+    for (EdgeIter e = edges.begin(); e != edges.end(); e++) {
+        e->computeCollapseCost();
+    }
 }
 
 template <typename T>
@@ -136,7 +92,7 @@ void swapMarkedRemove(std::vector<T>& vec, int& size)
     int n = (int)vec.size();
     
     if (n > 0) {
-        int start = 0, end = n-1;
+        int start = 0, end = n - 1;
         
         while (true) {
             // find first removed and valid T
@@ -149,7 +105,7 @@ void swapMarkedRemove(std::vector<T>& vec, int& size)
             std::swap(vec[start], vec[end]);
         }
         
-        size = vec[start].remove ? start : start+1;
+        size = vec[start].remove ? start : start + 1;
     }
 }
 
@@ -195,39 +151,13 @@ void Mesh::resetLists()
     MeshIO::indexElements(*this);
 }
 
-void Mesh::setQuadrics()
-{
-    for (VertexIter v = vertices.begin(); v != vertices.end(); v++) {
-        v->quadric.setZero();
-    }
-    
-    for (FaceCIter f = faces.begin(); f != faces.end(); f++) {
-        Eigen::Vector4d plane = f->plane();
-        
-        HalfEdgeCIter he = f->he;
-        do {
-            VertexIter v = he->vertex;
-            v->quadric += computeQuadric(plane);
-            
-            he = he->next;
-        } while (he != f->he);
-    }
-}
-
-void Mesh::setEdgeCollapseCost()
-{
-    for (EdgeIter e = edges.begin(); e != edges.end(); e++) {
-        e->computeCollapseCost();
-    }
-}
-
-void Mesh::simplify(double ratio)
+void Mesh::simplify(int target)
 {
     // 1
-    setQuadrics();
+    computeQuadrics();
     
     // 2
-    setEdgeCollapseCost();
+    computeEdgeCollapseCost();
 
     // 3
     for (EdgeIter e = edges.begin(); e != edges.end(); e++) {
@@ -237,36 +167,48 @@ void Mesh::simplify(double ratio)
     }
     
     // 4
-    if (ratio < 0.1) ratio = 0.1;
-    int target = faces.size() * ratio;
     int nF = (int)faces.size();
     while (nF > target) {
         const Edge& minE = heap.top();
-    
-        VertexIter v1 = minE.he->vertex;
-        VertexIter v2 = minE.he->flip->vertex;
-        
-        // update vertex position and quadric
-        v1->position = minE.position;
-        v1->quadric = v1->quadric + v2->quadric;
-        
-        // collapse edge
         EdgeIter e = edges.begin() + minE.index;
-        collapseEdge(e);
         
-        // update edge collapse cost
-        HalfEdgeIter he = v1->he;
-        do {
-            EdgeIter e = he->edge;
+        if (!e->remove && e->validCollapse()) {
+            VertexIter v1 = e->he->vertex;
+            VertexIter v2 = e->he->flip->vertex;
             
-            e->computeCollapseCost();
-            (*handles[e->index]).cost = e->cost;
+            // update vertex position and quadric
+            v1->position = e->position;
+            v1->quadric = v1->quadric + v2->quadric;
+            
+            // collapse edge
+            e->collapse();
+            
+            // update edge collapse cost
+            HalfEdgeIter he = v1->he;
+            do {
+                EdgeIter e = he->edge;
+                e->computeCollapseCost();
+                (*handles[e->index]).cost = e->cost;
+                heap.update(handles[e->index]);
+                
+                he = he->flip->next;
+            } while (he != v1->he);
+            
+            nF -= 2;
+            std::cout << "nF: " << nF << std::endl;
+        
+        } else if (e->remove) {
+            heap.pop();
+        
+        } else {
+            (*handles[e->index]).cost = INFINITY;
             heap.update(handles[e->index]);
-        
-            he = he->flip->next;
-        } while (he != v1->he);
-        
-        nF -= 2;
+            
+            const Edge& topE = heap.top();
+            EdgeIter e2 = edges.begin() + topE.index;
+            
+            if (e == e2) break;
+        }
     }
     
     // clean up
@@ -284,14 +226,10 @@ void Mesh::normalize()
     }
     cm /= (double)vertices.size();
     
-    // translate to origin
+    // translate to origin and determine radius
+    double rMax = 0;
     for (VertexIter v = vertices.begin(); v != vertices.end(); v++) {
         v->position -= cm;
-    }
-    
-    // determine radius
-    double rMax = 0;
-    for (VertexCIter v = vertices.begin(); v != vertices.end(); v++) {
         rMax = std::max(rMax, v->position.norm());
     }
     

@@ -17,7 +17,8 @@ const double clipFar = 1000.;
 double x = 0;
 double y = 0;
 double z = -2.5;
-int percent = 70;
+int originalFaces = 0;
+int targetFaces = 0;
 
 std::string path = "/Users/rohansawhney/Desktop/developer/C++/simplification/bunny.obj";
 
@@ -27,7 +28,7 @@ bool success = true;
 void printInstructions()
 {
     std::cerr << "space: simplify\n"
-              << "→/←: increase/decrease reduction percentage\n"
+              << "→/←: increase/decrease reduction targetFacesage\n"
               << "↑/↓: move in/out\n"
               << "w/s: move up/down\n"
               << "a/d: move left/right\n"
@@ -90,7 +91,8 @@ void keyboard(unsigned char key, int x0, int y0)
             exit(0);
         case ' ':
             mesh.read(path);
-            mesh.simplify(1 - (double)percent / 100.0);
+            mesh.simplify(targetFaces);
+            mesh.write("/Users/rohansawhney/Desktop/cowhead.obj");
             break;
         case 'a':
             x -= 0.03;
@@ -114,6 +116,8 @@ void keyboard(unsigned char key, int x0, int y0)
 
 void special(int i, int x0, int y0)
 {
+    int delta = targetFaces < 100 ? 2 : 100;
+    
     switch (i) {
         case GLUT_KEY_UP:
             z += 0.03;
@@ -122,17 +126,17 @@ void special(int i, int x0, int y0)
             z -= 0.03;
             break;
         case GLUT_KEY_LEFT:
-            percent -= 5;
-            if (percent < 0) percent = 0;
+            targetFaces -= delta;
+            if (targetFaces < 2) targetFaces = 2;
             break;
         case GLUT_KEY_RIGHT:
-            percent += 5;
-            if (percent > 90) percent = 90;
+            targetFaces += delta;
+            if (targetFaces > originalFaces) targetFaces = originalFaces;
             break;
     }
     
     std::stringstream title;
-    title << "Mesh Simplification, Reduction Percentage: " << percent << "%";
+    title << "Mesh Simplification, Target Faces: " << targetFaces;
     glutSetWindowTitle(title.str().c_str());
     
     glutPostRedisplay();
@@ -141,13 +145,15 @@ void special(int i, int x0, int y0)
 int main(int argc, char** argv) {
 
     success = mesh.read(path);
+    originalFaces = (int)mesh.faces.size();
+    targetFaces = (int)fmax(100, originalFaces*0.05);
     
     printInstructions();
     glutInitWindowSize(gridX, gridY);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
     glutInit(&argc, argv);
     std::stringstream title;
-    title << "Mesh Simplification, Reduction ratio: " << percent << "%";
+    title << "Mesh Simplification, Target Faces: " << targetFaces;
     glutCreateWindow(title.str().c_str());
     init();
     glutDisplayFunc(display);

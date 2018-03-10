@@ -18,9 +18,9 @@ double Face::area() const
 
 Eigen::Vector3d Face::normal() const
 {
-    Eigen::Vector3d a = he->vertex->position;
-    Eigen::Vector3d b = he->next->vertex->position;
-    Eigen::Vector3d c = he->next->next->vertex->position;
+    const Eigen::Vector3d& a = he->vertex->position;
+    const Eigen::Vector3d& b = he->next->vertex->position;
+    const Eigen::Vector3d& c = he->next->next->vertex->position;
     
     Eigen::Vector3d v1 = b - a;
     Eigen::Vector3d v2 = c - a;
@@ -30,7 +30,7 @@ Eigen::Vector3d Face::normal() const
 
 Eigen::Vector4d Face::plane() const
 {
-    Eigen::Vector3d a = he->vertex->position;
+    const Eigen::Vector3d& a = he->vertex->position;
     
     Eigen::Vector3d n = normal();
     n.normalize();

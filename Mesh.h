@@ -22,7 +22,7 @@ public:
     bool write(const std::string& fileName) const;
     
     // simplifies mesh
-    void simplify(double ratio);
+    void simplify(int target);
     
     // member variables
     std::vector<HalfEdge> halfEdges;
@@ -38,19 +38,10 @@ private:
     void normalize();
     
     // initializes quadrics
-    void setQuadrics();
+    void computeQuadrics();
     
-    // sets edge collapse cost
-    void setEdgeCollapseCost();
-    
-    // checks valid flip
-    bool validCollapse(EdgeIter& e);
-    
-    // updates heap
-    void updateHeap(EdgeIter& e);
-    
-    // collapses edge and removes adjacent faces
-    void collapseEdge(EdgeIter& e);
+    // computes edge collapse cost
+    void computeEdgeCollapseCost();
 
     // removes edges marked for deletion
     void resetLists();

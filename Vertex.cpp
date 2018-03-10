@@ -15,14 +15,14 @@ bool Vertex::onBoundary() const
         if (h->onBoundary) {
             return true;
         }
-        h = h->flip->next;
         
+        h = h->flip->next;
     } while (h != he);
     
     return false;
 }
 
-bool Vertex::shareEdge(VertexCIter& v) const
+bool Vertex::shareEdge(VertexCIter v) const
 {
     HalfEdgeCIter h = he;
     do {
@@ -31,7 +31,6 @@ bool Vertex::shareEdge(VertexCIter& v) const
         }
         
         h = h->flip->next;
-        
     } while (h != he);
     
     return false;

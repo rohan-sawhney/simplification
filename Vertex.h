@@ -27,7 +27,7 @@ public:
     bool onBoundary() const;
     
     // checks if vertices share an edge
-    bool shareEdge(VertexCIter& v) const;
+    bool shareEdge(VertexCIter v) const;
 };
 
 #endif
