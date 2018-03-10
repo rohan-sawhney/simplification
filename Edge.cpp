@@ -16,31 +16,6 @@ double error(const Eigen::Matrix4d& quadric, const double x, const double y, con
            quadric(3, 3);
 }
 
-bool Edge::validCollapse()
-{
-    HalfEdgeCIter flip = he->flip;
-    
-    VertexCIter v1 = he->vertex;
-    VertexCIter v2 = flip->vertex;
-    VertexCIter v3 = he->next->next->vertex;
-    VertexCIter v4 = flip->next->next->vertex;
-    
-    if (v1->onBoundary() || v2->onBoundary()) return false;
-    
-    // check for one ring intersection
-    HalfEdgeCIter h = he;
-    do {
-        VertexCIter v = h->flip->vertex;
-        if (v != v2 && v != v3 && v != v4) {
-            if (v->shareEdge(v2)) return false;
-        }
-        
-        h = h->flip->next;
-    } while (h != he);
-    
-    return true;
-}
-
 void Edge::computeCollapseCost()
 {
     VertexIter v1 = he->vertex;
@@ -82,6 +57,31 @@ void Edge::computeCollapseCost()
             position = p3;
         }
     }
+}
+
+bool Edge::validCollapse() const
+{
+    HalfEdgeCIter flip = he->flip;
+    
+    VertexCIter v1 = he->vertex;
+    VertexCIter v2 = flip->vertex;
+    VertexCIter v3 = he->next->next->vertex;
+    VertexCIter v4 = flip->next->next->vertex;
+    
+    if (v1->onBoundary() || v2->onBoundary()) return false;
+    
+    // check for one ring intersection
+    HalfEdgeCIter h = he;
+    do {
+        VertexCIter v = h->flip->vertex;
+        if (v != v2 && v != v3 && v != v4) {
+            if (v->shareEdge(v2)) return false;
+        }
+        
+        h = h->flip->next;
+    } while (h != he);
+    
+    return true;
 }
 
 void Edge::collapse()

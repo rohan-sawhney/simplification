@@ -26,11 +26,11 @@ public:
     // comparator
     bool operator<(const Edge& e) const;
     
-    // checks if collapse is valid
-    bool validCollapse();
-    
     // computes edge collapse cost
     void computeCollapseCost();
+    
+    // checks if collapse is valid
+    bool validCollapse() const;
     
     // collapses edge
     void collapse();

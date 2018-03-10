@@ -398,14 +398,10 @@ void MeshIO::write(std::ofstream& out, const Mesh& mesh)
     std::unordered_map<std::string, int> vertexMap;
     
     // write vertices
-    int index = 1;
     for (VertexCIter v = mesh.vertices.begin(); v != mesh.vertices.end(); v++) {
         out << "v " << v->position.x() << " "
                     << v->position.y() << " "
                     << v->position.z() << std::endl;
-        
-        vertexMap[stringRep(v->position)] = index;
-        index++;
     }
     
     // write faces
@@ -419,7 +415,7 @@ void MeshIO::write(std::ofstream& out, const Mesh& mesh)
         out << "f ";
         int j = 0;
         do {
-            out << vertexMap[stringRep(he->vertex->position)] << " ";
+            out << he->vertex->index + 1 << " ";
             j++;
             
             he = he->next;
